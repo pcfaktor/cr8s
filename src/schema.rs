@@ -20,13 +20,10 @@ diesel::table! {
         id -> Int4,
         name -> Varchar,
         email -> Varchar,
-        crated_at -> Timestamp,
+        created_at -> Timestamp,
     }
 }
 
 diesel::joinable!(crates -> rustaceans (rustacean_id));
 
-diesel::allow_tables_to_appear_in_same_query!(
-    crates,
-    rustaceans,
-);
+diesel::allow_tables_to_appear_in_same_query!(crates, rustaceans,);
