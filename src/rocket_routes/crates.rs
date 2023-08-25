@@ -12,10 +12,10 @@ use crate::{
 
 const CRATES_LIMIT: i64 = 100;
 
-#[rocket::get("/crates")]
-pub async fn get_crates(db: DbConnection) -> Result<Value, Custom<Value>> {
-    db.run(|connection| {
-        CrateRepository::find_multiple(connection, CRATES_LIMIT)
+#[rocket::get("/crates?<limit>")]
+pub async fn get_crates(db: DbConnection, limit: Option<i64>) -> Result<Value, Custom<Value>> {
+    db.run(move |connection| {
+        CrateRepository::find_multiple(connection, limit.unwrap_or_else(|| CRATES_LIMIT))
             .map(|crates| json!(crates))
             .map_err(|_error| Custom(Status::InternalServerError, json!("Error")))
     })

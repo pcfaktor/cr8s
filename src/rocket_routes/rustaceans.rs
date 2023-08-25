@@ -12,10 +12,10 @@ use crate::{
 
 const RUSTACEANS_LIMIT: i64 = 100;
 
-#[rocket::get("/rustaceans")]
-pub async fn get_rustaceans(db: DbConnection) -> Result<Value, Custom<Value>> {
-    db.run(|connection| {
-        RustaceanRepository::find_multiple(connection, RUSTACEANS_LIMIT)
+#[rocket::get("/rustaceans?<limit>")]
+pub async fn get_rustaceans(db: DbConnection, limit: Option<i64>) -> Result<Value, Custom<Value>> {
+    db.run(move |connection| {
+        RustaceanRepository::find_multiple(connection, limit.unwrap_or_else(|| RUSTACEANS_LIMIT))
             .map(|rustaceans| json!(rustaceans))
             .map_err(|_error| Custom(Status::InternalServerError, json!("Error")))
     })
