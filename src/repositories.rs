@@ -43,6 +43,7 @@ impl RustaceanRepository {
 
 pub struct CratesRepository;
 
+#[allow(dead_code)]
 impl CratesRepository {
     pub fn find(connection: &mut PgConnection, id: i32) -> QueryResult<Crate> {
         crates::table.find(id).get_result(connection)
