@@ -41,10 +41,9 @@ impl RustaceanRepository {
     }
 }
 
-pub struct CratesRepository;
+pub struct CrateRepository;
 
-#[allow(dead_code)]
-impl CratesRepository {
+impl CrateRepository {
     pub fn find(connection: &mut PgConnection, id: i32) -> QueryResult<Crate> {
         crates::table.find(id).get_result(connection)
     }

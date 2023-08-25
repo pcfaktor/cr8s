@@ -1,12 +1,9 @@
-use diesel::PgConnection;
+use rocket_routes::DbConnection;
 
 mod models;
 mod repositories;
 mod rocket_routes;
 mod schema;
-
-#[rocket_sync_db_pools::database("postgres")]
-pub struct DbConnection(PgConnection);
 
 #[rocket::main]
 async fn main() {
@@ -14,6 +11,11 @@ async fn main() {
         .mount(
             "/",
             rocket::routes![
+                rocket_routes::crates::get_crates,
+                rocket_routes::crates::view_crate,
+                rocket_routes::crates::create_crate,
+                rocket_routes::crates::update_crate,
+                rocket_routes::crates::delete_crate,
                 rocket_routes::rustaceans::get_rustaceans,
                 rocket_routes::rustaceans::view_rustacean,
                 rocket_routes::rustaceans::create_rustacean,

@@ -7,7 +7,7 @@ use rocket::{
 use crate::{
     models::{NewRustacean, Rustacean},
     repositories::RustaceanRepository,
-    DbConnection,
+    rocket_routes::DbConnection,
 };
 
 const RUSTACEANS_LIMIT: i64 = 100;
