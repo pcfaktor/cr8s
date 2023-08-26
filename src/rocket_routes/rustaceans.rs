@@ -10,6 +10,8 @@ use crate::{
     rocket_routes::DbConnection,
 };
 
+use super::server_error;
+
 const RUSTACEANS_LIMIT: i64 = 100;
 
 #[rocket::get("/rustaceans?<limit>")]
@@ -17,7 +19,7 @@ pub async fn get_rustaceans(db: DbConnection, limit: Option<i64>) -> Result<Valu
     db.run(move |connection| {
         RustaceanRepository::find_multiple(connection, limit.unwrap_or_else(|| RUSTACEANS_LIMIT))
             .map(|rustaceans| json!(rustaceans))
-            .map_err(|_error| Custom(Status::InternalServerError, json!("Error")))
+            .map_err(|e| server_error(e.into()))
     })
     .await
 }
@@ -27,7 +29,7 @@ pub async fn view_rustacean(id: i32, db: DbConnection) -> Result<Value, Custom<V
     db.run(move |connection| {
         RustaceanRepository::find(connection, id)
             .map(|rustacean| json!(rustacean))
-            .map_err(|_error| Custom(Status::InternalServerError, json!("Error")))
+            .map_err(|e| server_error(e.into()))
     })
     .await
 }
@@ -40,7 +42,7 @@ pub async fn create_rustacean(
     db.run(move |connection| {
         RustaceanRepository::create(connection, new_rustacean.into_inner())
             .map(|rustacean| Custom(Status::Created, json!(rustacean)))
-            .map_err(|_error| Custom(Status::InternalServerError, json!("Error")))
+            .map_err(|e| server_error(e.into()))
     })
     .await
 }
@@ -54,7 +56,7 @@ pub async fn update_rustacean(
     db.run(move |connection| {
         RustaceanRepository::update(connection, id, rustacean.into_inner())
             .map(|rustacean| json!(rustacean))
-            .map_err(|_error| Custom(Status::InternalServerError, json!("Error")))
+            .map_err(|e| server_error(e.into()))
     })
     .await
 }
@@ -64,7 +66,7 @@ pub async fn delete_rustacean(id: i32, db: DbConnection) -> Result<NoContent, Cu
     db.run(move |connection| {
         RustaceanRepository::delete(connection, id)
             .map(|_| NoContent)
-            .map_err(|_error| Custom(Status::InternalServerError, json!("Error")))
+            .map_err(|e| server_error(e.into()))
     })
     .await
 }

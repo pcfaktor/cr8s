@@ -3,29 +3,11 @@ use std::ops::Add;
 use reqwest::{blocking::Client, StatusCode};
 use rocket::serde::json::{json, Value};
 
+use crate::common::{create_test_rustacean, delete_test_rustacean};
+
 const BASE_URL: &str = "http://127.0.0.1:8000";
 
-fn create_test_rustacean(client: &Client) -> Value {
-    let response = client
-        .post(BASE_URL.to_string().add("/rustaceans"))
-        .json(&json!({
-            "name":"John",
-            "email":"j.doe@gmail.com"
-        }))
-        .send()
-        .unwrap();
-    assert_eq!(response.status(), StatusCode::CREATED);
-
-    response.json().unwrap()
-}
-
-fn delete_test_rustacean(client: &Client, rustacean: Value) {
-    let response = client
-        .delete(format!("{}/rustaceans/{}", BASE_URL, rustacean["id"]))
-        .send()
-        .unwrap();
-    assert_eq!(response.status(), StatusCode::NO_CONTENT);
-}
+pub mod common;
 
 #[test]
 fn test_get_rustaceans() {
