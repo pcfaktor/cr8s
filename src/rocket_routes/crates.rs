@@ -10,6 +10,8 @@ use crate::{
     rocket_routes::DbConnection,
 };
 
+use super::server_error;
+
 const CRATES_LIMIT: i64 = 100;
 
 #[rocket::get("/crates?<limit>")]
@@ -17,7 +19,7 @@ pub async fn get_crates(db: DbConnection, limit: Option<i64>) -> Result<Value, C
     db.run(move |connection| {
         CrateRepository::find_multiple(connection, limit.unwrap_or_else(|| CRATES_LIMIT))
             .map(|crates| json!(crates))
-            .map_err(|_error| Custom(Status::InternalServerError, json!("Error")))
+            .map_err(|e| server_error(e.into()))
     })
     .await
 }
@@ -27,7 +29,12 @@ pub async fn view_crate(id: i32, db: DbConnection) -> Result<Value, Custom<Value
     db.run(move |connection| {
         CrateRepository::find(connection, id)
             .map(|a_crate| json!(a_crate))
-            .map_err(|_error| Custom(Status::InternalServerError, json!("Error")))
+            .map_err(|e| match e {
+                diesel::result::Error::NotFound => {
+                    Custom(Status::NotFound, json!("Crate not found"))
+                }
+                _ => server_error(e.into()),
+            })
     })
     .await
 }
@@ -40,7 +47,7 @@ pub async fn create_crate(
     db.run(move |connection| {
         CrateRepository::create(connection, new_crate.into_inner())
             .map(|a_crate| Custom(Status::Created, json!(a_crate)))
-            .map_err(|_error| Custom(Status::InternalServerError, json!("Error")))
+            .map_err(|e| server_error(e.into()))
     })
     .await
 }
@@ -54,7 +61,7 @@ pub async fn update_crate(
     db.run(move |connection| {
         CrateRepository::update(connection, id, a_crate.into_inner())
             .map(|a_crate| json!(a_crate))
-            .map_err(|_error| Custom(Status::InternalServerError, json!("Error")))
+            .map_err(|e| server_error(e.into()))
     })
     .await
 }
@@ -64,7 +71,7 @@ pub async fn delete_crate(id: i32, db: DbConnection) -> Result<NoContent, Custom
     db.run(move |connection| {
         CrateRepository::delete(connection, id)
             .map(|_| NoContent)
-            .map_err(|_error| Custom(Status::InternalServerError, json!("Error")))
+            .map_err(|e| server_error(e.into()))
     })
     .await
 }

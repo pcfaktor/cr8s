@@ -29,7 +29,12 @@ pub async fn view_rustacean(id: i32, db: DbConnection) -> Result<Value, Custom<V
     db.run(move |connection| {
         RustaceanRepository::find(connection, id)
             .map(|rustacean| json!(rustacean))
-            .map_err(|e| server_error(e.into()))
+            .map_err(|e| match e {
+                diesel::result::Error::NotFound => {
+                    Custom(Status::NotFound, json!("Rustacean not found"))
+                }
+                _ => server_error(e.into()),
+            })
     })
     .await
 }

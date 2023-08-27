@@ -1,11 +1,8 @@
-use std::ops::Add;
-
+use common::APP_HOST;
 use reqwest::{blocking::Client, StatusCode};
 use rocket::serde::json::{json, Value};
 
 use crate::common::{create_test_rustacean, delete_test_rustacean};
-
-const BASE_URL: &str = "http://127.0.0.1:8000";
 
 pub mod common;
 
@@ -16,7 +13,7 @@ fn test_get_rustaceans() {
     let rustacean2 = create_test_rustacean(&client);
 
     let response = client
-        .get(BASE_URL.to_string().add("/rustaceans"))
+        .get(format!("{}/rustaceans", APP_HOST))
         .send()
         .unwrap();
 
@@ -33,7 +30,7 @@ fn test_get_rustaceans() {
 fn test_create_rustacean() {
     let client = Client::new();
     let response = client
-        .post(BASE_URL.to_string().add("/rustaceans"))
+        .post(format!("{}/rustaceans", APP_HOST))
         .json(&json!({
             "name":"John",
             "email":"j.doe@gmail.com"
@@ -63,7 +60,7 @@ fn test_view_rustacean() {
     let rustacean: Value = create_test_rustacean(&client);
 
     let response = client
-        .get(format!("{}/rustaceans/{}", BASE_URL, rustacean["id"]))
+        .get(format!("{}/rustaceans/{}", APP_HOST, rustacean["id"]))
         .send()
         .unwrap();
     assert_eq!(response.status(), StatusCode::OK);
@@ -84,12 +81,23 @@ fn test_view_rustacean() {
 }
 
 #[test]
+fn test_view_rustacean_not_found() {
+    let client = Client::new();
+
+    let response = client
+        .get(format!("{}/rustaceans/{}", APP_HOST, -1))
+        .send()
+        .unwrap();
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+}
+
+#[test]
 fn test_update_rustacean() {
     let client = Client::new();
     let rustacean: Value = create_test_rustacean(&client);
 
     let response = client
-        .put(format!("{}/rustaceans/{}", BASE_URL, rustacean["id"]))
+        .put(format!("{}/rustaceans/{}", APP_HOST, rustacean["id"]))
         .json(&json!({
             "name":"Gunrock",
             "email":"gunrock@gmail.com"
@@ -119,7 +127,7 @@ fn test_delete_rustacean() {
     let rustacean: Value = create_test_rustacean(&client);
 
     let response = client
-        .delete(format!("{}/rustaceans/{}", BASE_URL, rustacean["id"]))
+        .delete(format!("{}/rustaceans/{}", APP_HOST, rustacean["id"]))
         .send()
         .unwrap();
     assert_eq!(response.status(), StatusCode::NO_CONTENT);
