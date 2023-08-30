@@ -25,9 +25,26 @@ pub fn create_user(username: String, password: String, role_codes: Vec<String>) 
     let user = UserRepository::create(&mut connection, new_user, role_codes).unwrap();
     println!("User created: {:?}", user);
     let roles = RoleRepository::find_by_user(&mut connection, &user).unwrap();
-    println!("Role assigned: {:?}", roles);
+    for role in roles {
+        println!("Role assigned: {:?}", role);
+    }
 }
 
-pub fn list_users() {}
+pub fn list_users() {
+    let mut connection = load_db_connection();
 
-pub fn delete_user(_id: i32) {}
+    let users = UserRepository::find_with_roles(&mut connection).unwrap();
+    for user in users {
+        println!("User: {:?}", user.0);
+        println!("Roles:");
+        for role in user.1.iter() {
+            println!("\t{:?}", role.1);
+        }
+    }
+}
+
+pub fn delete_user(id: i32) {
+    let mut connection = load_db_connection();
+
+    UserRepository::delete(&mut connection, id).unwrap();
+}

@@ -88,6 +88,10 @@ impl UserRepository {
             .values(new_user)
             .get_result::<User>(connection)?;
         for code in role_codes {
+            if code.is_empty() {
+                continue;
+            }
+
             let new_user_role = {
                 if let Ok(role) = RoleRepository::find_by_code(connection, code.to_owned()) {
                     NewUserRole {
@@ -113,6 +117,22 @@ impl UserRepository {
         }
 
         Ok(user)
+    }
+
+    pub fn find_with_roles(
+        connection: &mut PgConnection,
+    ) -> QueryResult<Vec<(User, Vec<(UserRole, Role)>)>> {
+        let users = users::table.load(connection)?;
+        let user_roles = user_roles::table
+            .inner_join(roles::table)
+            .load::<(UserRole, Role)>(connection)?
+            .grouped_by(&users);
+        Ok(users.into_iter().zip(user_roles).collect())
+    }
+
+    pub fn delete(connection: &mut PgConnection, id: i32) -> QueryResult<usize> {
+        diesel::delete(user_roles::table.filter(user_roles::user_id.eq(id))).execute(connection)?;
+        diesel::delete(users::table.find(id)).execute(connection)
     }
 }
 
