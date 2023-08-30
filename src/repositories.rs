@@ -119,6 +119,12 @@ impl UserRepository {
         Ok(user)
     }
 
+    pub fn find_by_username(connection: &mut PgConnection, username: &String) -> QueryResult<User> {
+        users::table
+            .filter(users::username.eq(username))
+            .first(connection)
+    }
+
     pub fn find_with_roles(
         connection: &mut PgConnection,
     ) -> QueryResult<Vec<(User, Vec<(UserRole, Role)>)>> {
