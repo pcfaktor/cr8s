@@ -333,6 +333,7 @@ dependencies = [
  "clap",
  "diesel",
  "log",
+ "rand",
  "reqwest",
  "rocket",
  "rocket_sync_db_pools",

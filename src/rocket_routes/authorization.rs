@@ -1,16 +1,12 @@
 use super::{server_error, DbConnection};
-use crate::repositories::UserRepository;
-use argon2::{PasswordHash, PasswordVerifier};
+use crate::{
+    auth::{self, Credentials},
+    repositories::UserRepository,
+};
 use rocket::{
     response::status::Custom,
     serde::json::{serde_json::json, Json, Value},
 };
-
-#[derive(serde::Deserialize)]
-pub struct Credentials {
-    pub username: String,
-    pub password: String,
-}
 
 #[rocket::post("/login", format = "json", data = "<credentials>")]
 pub async fn login(
@@ -20,13 +16,8 @@ pub async fn login(
     db.run(move |connection| {
         UserRepository::find_by_username(connection, &credentials.username)
             .map(|user| {
-                let db_hash = PasswordHash::new(&user.password).unwrap();
-                let argon = argon2::Argon2::default();
-                if argon
-                    .verify_password(credentials.password.as_bytes(), &db_hash)
-                    .is_ok()
-                {
-                    return json!("Success");
+                if let Ok(token) = auth::authorize_user(&user, &credentials) {
+                    return json!(token);
                 }
                 json!("Unauthorized")
             })

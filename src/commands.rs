@@ -1,8 +1,6 @@
-use argon2::password_hash::rand_core::OsRng;
-use argon2::password_hash::SaltString;
-use argon2::PasswordHasher;
 use diesel::{Connection, PgConnection};
 
+use crate::auth;
 use crate::models::NewUser;
 use crate::repositories::{RoleRepository, UserRepository};
 
@@ -14,10 +12,7 @@ fn load_db_connection() -> PgConnection {
 pub fn create_user(username: String, password: String, role_codes: Vec<String>) {
     let mut connection = load_db_connection();
 
-    let salt = SaltString::generate(OsRng);
-    let argon = argon2::Argon2::default();
-    let password_hash = argon.hash_password(password.as_bytes(), &salt).unwrap();
-
+    let password_hash = auth::hash_password(password).unwrap();
     let new_user = NewUser {
         username,
         password: password_hash.to_string(),
