@@ -1,4 +1,5 @@
-use cr8s::rocket_routes::DbConnection;
+use cr8s::rocket_routes::{CacheConnection, DbConnection};
+use rocket_db_pools::Database;
 
 extern crate cr8s;
 
@@ -22,6 +23,7 @@ async fn main() {
             ],
         )
         .attach(DbConnection::fairing())
+        .attach(CacheConnection::init())
         .launch()
         .await;
 }
