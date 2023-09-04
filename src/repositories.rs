@@ -1,8 +1,12 @@
 use diesel::prelude::*;
+use rocket_db_pools::deadpool_redis::redis::RedisError;
 
+use crate::auth::SESSION_LIFE_TIME;
 use crate::models::{Crate, NewCrate, NewRustacean, Rustacean};
 use crate::models::{NewRole, NewUser, NewUserRole, Role, User, UserRole};
+use crate::rocket_routes::CacheConnection;
 use crate::schema::{crates, roles, rustaceans, user_roles, users};
+use rocket_db_pools::{deadpool_redis::redis::AsyncCommands, Connection};
 
 pub struct RustaceanRepository;
 
@@ -165,5 +169,19 @@ impl RoleRepository {
         diesel::insert_into(roles::table)
             .values(role)
             .get_result::<Role>(connection)
+    }
+}
+
+pub struct SessionRepository;
+
+impl SessionRepository {
+    pub async fn cache_session_id(
+        session_id: &String,
+        user_id: i32,
+        mut cache: Connection<CacheConnection>,
+    ) -> Result<(), RedisError> {
+        cache
+            .set_ex::<_, _, ()>(format!("session/{session_id}"), user_id, SESSION_LIFE_TIME)
+            .await
     }
 }

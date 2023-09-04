@@ -5,7 +5,8 @@ use argon2::{
 };
 use rand::{distributions::Alphanumeric, rngs::OsRng, Rng};
 
-const SESSION_ID_LENGTH: usize = 128;
+pub const SESSION_LIFE_TIME: usize = 3 * 60 * 60;
+pub const SESSION_ID_LENGTH: usize = 128;
 
 #[derive(serde::Deserialize)]
 pub struct Credentials {

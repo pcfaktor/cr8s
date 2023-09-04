@@ -1,10 +1,11 @@
 use super::{server_error, DbConnection};
 use crate::{
     auth::{self, Credentials},
-    repositories::UserRepository,
+    repositories::{SessionRepository, UserRepository},
     rocket_routes::CacheConnection,
 };
 use rocket::{
+    http::Status,
     response::status::Custom,
     serde::json::{serde_json::json, Json, Value},
 };
@@ -14,17 +15,21 @@ use rocket_db_pools::Connection;
 pub async fn login(
     credentials: Json<Credentials>,
     db: DbConnection,
-    _cache: Connection<CacheConnection>,
+    cache: Connection<CacheConnection>,
 ) -> Result<Value, Custom<Value>> {
-    db.run(move |connection| {
-        UserRepository::find_by_username(connection, &credentials.username)
-            .map(|user| {
-                if let Ok(token) = auth::authorize_user(&user, &credentials) {
-                    return json!(token);
-                }
-                json!("Unauthorized")
-            })
-            .map_err(|e| server_error(e.into()))
-    })
-    .await
+    let username = credentials.username.clone();
+    let user = db
+        .run(move |connection| {
+            UserRepository::find_by_username(connection, &username)
+                .map_err(|e| server_error(e.into()))
+        })
+        .await?;
+
+    let session_id = auth::authorize_user(&user, &credentials)
+        .map_err(|_| Custom(Status::Unauthorized, json!("Wrong credentials")))?;
+
+    SessionRepository::cache_session_id(&session_id, user.id, cache)
+        .await
+        .map(|_| json!({ "token": session_id }))
+        .map_err(|e| server_error(e.into()))
 }
