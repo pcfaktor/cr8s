@@ -84,30 +84,27 @@ pub struct UserRepository;
 
 impl UserRepository {
     pub fn create(
-        connection: &mut PgConnection,
+        c: &mut PgConnection,
         new_user: NewUser,
         role_codes: Vec<String>,
     ) -> QueryResult<User> {
         let user = diesel::insert_into(users::table)
             .values(new_user)
-            .get_result::<User>(connection)?;
-        for code in role_codes {
-            if code.is_empty() {
-                continue;
-            }
+            .get_result::<User>(c)?;
 
+        for role_code in role_codes {
             let new_user_role = {
-                if let Ok(role) = RoleRepository::find_by_code(connection, code.to_owned()) {
+                if let Ok(role) = RoleRepository::find_by_code(c, role_code.to_owned()) {
                     NewUserRole {
                         user_id: user.id,
                         role_id: role.id,
                     }
                 } else {
                     let new_role = NewRole {
-                        name: code.to_owned(),
-                        code: code.to_owned(),
+                        name: role_code.to_owned(),
+                        code: role_code.to_owned(),
                     };
-                    let role = RoleRepository::create(connection, new_role)?;
+                    let role = RoleRepository::create(c, new_role)?;
                     NewUserRole {
                         user_id: user.id,
                         role_id: role.id,
@@ -117,7 +114,7 @@ impl UserRepository {
 
             diesel::insert_into(user_roles::table)
                 .values(new_user_role)
-                .get_result::<UserRole>(connection)?;
+                .get_result::<UserRole>(c)?;
         }
 
         Ok(user)
@@ -138,6 +135,10 @@ impl UserRepository {
             .load::<(UserRole, Role)>(connection)?
             .grouped_by(&users);
         Ok(users.into_iter().zip(user_roles).collect())
+    }
+
+    pub fn find(connection: &mut PgConnection, id: i32) -> QueryResult<User> {
+        users::table.find(id).get_result(connection)
     }
 
     pub fn delete(connection: &mut PgConnection, id: i32) -> QueryResult<usize> {
@@ -181,7 +182,11 @@ impl SessionRepository {
         mut cache: Connection<CacheConnection>,
     ) -> Result<(), RedisError> {
         cache
-            .set_ex::<_, _, ()>(format!("session/{session_id}"), user_id, SESSION_LIFE_TIME)
+            .set_ex::<_, _, ()>(
+                format!("sessions/{}", session_id),
+                user_id,
+                SESSION_LIFE_TIME,
+            )
             .await
     }
 }

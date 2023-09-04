@@ -1,19 +1,21 @@
-use common::APP_HOST;
 use common::{create_test_crate, create_test_rustacean, delete_test_crate, delete_test_rustacean};
-use reqwest::{blocking::Client, StatusCode};
+use reqwest::StatusCode;
 use serde_json::{json, Value};
 
 pub mod common;
 
 #[test]
 fn test_get_crates() {
-    let client = Client::new();
+    let client = common::get_client_with_logged_in_user();
 
     let rustacean = create_test_rustacean(&client);
     let crate1 = create_test_crate(&client, &rustacean);
     let crate2 = create_test_crate(&client, &rustacean);
 
-    let response = client.get(format!("{}/crates", APP_HOST)).send().unwrap();
+    let response = client
+        .get(format!("{}/crates", common::APP_HOST))
+        .send()
+        .unwrap();
     assert_eq!(response.status(), StatusCode::OK);
 
     let json: Value = response.json().unwrap();
@@ -27,11 +29,11 @@ fn test_get_crates() {
 
 #[test]
 fn test_create_crate() {
-    let client = Client::new();
+    let client = common::get_client_with_logged_in_user();
     let rustacean = create_test_rustacean(&client);
 
     let response = client
-        .post(format!("{}/crates", APP_HOST))
+        .post(format!("{}/crates", common::APP_HOST))
         .json(&json!({
             "rustacean_id": rustacean["id"],
             "code": "foo",
@@ -63,13 +65,13 @@ fn test_create_crate() {
 
 #[test]
 fn test_update_crate() {
-    let client = Client::new();
+    let client = common::get_client_with_logged_in_user();
     let rustacean = create_test_rustacean(&client);
     let rustacean2 = create_test_rustacean(&client);
     let a_crate = create_test_crate(&client, &rustacean);
 
     let response = client
-        .put(format!("{}/crates/{}", APP_HOST, a_crate["id"]))
+        .put(format!("{}/crates/{}", common::APP_HOST, a_crate["id"]))
         .json(&json!({
             "code": "newcode",
             "name": "Crate new name",
@@ -110,12 +112,12 @@ fn test_update_crate() {
 
 #[test]
 fn test_view_crate() {
-    let client = Client::new();
+    let client = common::get_client_with_logged_in_user();
     let rustacean = create_test_rustacean(&client);
     let a_crate = create_test_crate(&client, &rustacean);
 
     let response = client
-        .get(&format!("{}/crates/{}", APP_HOST, a_crate["id"]))
+        .get(&format!("{}/crates/{}", common::APP_HOST, a_crate["id"]))
         .send()
         .unwrap();
 
@@ -131,10 +133,10 @@ fn test_view_crate() {
 
 #[test]
 fn test_view_crate_not_found() {
-    let client = Client::new();
+    let client = common::get_client_with_logged_in_user();
 
     let response = client
-        .get(format!("{}/crates/{}", APP_HOST, -1))
+        .get(format!("{}/crates/{}", common::APP_HOST, -1))
         .send()
         .unwrap();
 
@@ -143,12 +145,12 @@ fn test_view_crate_not_found() {
 
 #[test]
 fn test_delete_crate() {
-    let client = Client::new();
+    let client = common::get_client_with_logged_in_user();
     let rustacean = create_test_rustacean(&client);
     let a_crate = create_test_crate(&client, &rustacean);
 
     let response = client
-        .delete(&format!("{}/crates/{}", APP_HOST, a_crate["id"]))
+        .delete(&format!("{}/crates/{}", common::APP_HOST, a_crate["id"]))
         .send()
         .unwrap();
 

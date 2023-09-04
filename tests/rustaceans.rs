@@ -1,5 +1,4 @@
-use common::APP_HOST;
-use reqwest::{blocking::Client, StatusCode};
+use reqwest::StatusCode;
 use rocket::serde::json::{json, Value};
 
 use crate::common::{create_test_rustacean, delete_test_rustacean};
@@ -8,12 +7,12 @@ pub mod common;
 
 #[test]
 fn test_get_rustaceans() {
-    let client = Client::new();
+    let client = common::get_client_with_logged_in_user();
     let rustacean1 = create_test_rustacean(&client);
     let rustacean2 = create_test_rustacean(&client);
 
     let response = client
-        .get(format!("{}/rustaceans", APP_HOST))
+        .get(format!("{}/rustaceans", common::APP_HOST))
         .send()
         .unwrap();
 
@@ -28,9 +27,9 @@ fn test_get_rustaceans() {
 
 #[test]
 fn test_create_rustacean() {
-    let client = Client::new();
+    let client = common::get_client_with_logged_in_user();
     let response = client
-        .post(format!("{}/rustaceans", APP_HOST))
+        .post(format!("{}/rustaceans", common::APP_HOST))
         .json(&json!({
             "name":"John",
             "email":"j.doe@gmail.com"
@@ -56,11 +55,15 @@ fn test_create_rustacean() {
 
 #[test]
 fn test_view_rustacean() {
-    let client = Client::new();
+    let client = common::get_client_with_logged_in_user();
     let rustacean: Value = create_test_rustacean(&client);
 
     let response = client
-        .get(format!("{}/rustaceans/{}", APP_HOST, rustacean["id"]))
+        .get(format!(
+            "{}/rustaceans/{}",
+            common::APP_HOST,
+            rustacean["id"]
+        ))
         .send()
         .unwrap();
     assert_eq!(response.status(), StatusCode::OK);
@@ -82,10 +85,10 @@ fn test_view_rustacean() {
 
 #[test]
 fn test_view_rustacean_not_found() {
-    let client = Client::new();
+    let client = common::get_client_with_logged_in_user();
 
     let response = client
-        .get(format!("{}/rustaceans/{}", APP_HOST, -1))
+        .get(format!("{}/rustaceans/{}", common::APP_HOST, -1))
         .send()
         .unwrap();
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
@@ -93,11 +96,15 @@ fn test_view_rustacean_not_found() {
 
 #[test]
 fn test_update_rustacean() {
-    let client = Client::new();
+    let client = common::get_client_with_logged_in_user();
     let rustacean: Value = create_test_rustacean(&client);
 
     let response = client
-        .put(format!("{}/rustaceans/{}", APP_HOST, rustacean["id"]))
+        .put(format!(
+            "{}/rustaceans/{}",
+            common::APP_HOST,
+            rustacean["id"]
+        ))
         .json(&json!({
             "name":"Gunrock",
             "email":"gunrock@gmail.com"
@@ -123,11 +130,15 @@ fn test_update_rustacean() {
 
 #[test]
 fn test_delete_rustacean() {
-    let client = Client::new();
+    let client = common::get_client_with_logged_in_user();
     let rustacean: Value = create_test_rustacean(&client);
 
     let response = client
-        .delete(format!("{}/rustaceans/{}", APP_HOST, rustacean["id"]))
+        .delete(format!(
+            "{}/rustaceans/{}",
+            common::APP_HOST,
+            rustacean["id"]
+        ))
         .send()
         .unwrap();
     assert_eq!(response.status(), StatusCode::NO_CONTENT);

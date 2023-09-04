@@ -1,6 +1,10 @@
 use std::process::{Command, Output};
 
-use reqwest::{blocking::Client, StatusCode};
+use reqwest::{
+    blocking::{Client, ClientBuilder},
+    header::{self, HeaderMap, HeaderValue},
+    StatusCode,
+};
 use serde_json::{json, Value};
 
 pub const APP_HOST: &'static str = "http://127.0.0.1:8000";
@@ -81,4 +85,47 @@ pub fn delete_test_user(create_stdout: String) {
         .arg("delete")
         .arg(user_id)
         .status();
+}
+
+pub fn get_client_with_logged_in_user() -> Client {
+    let username = "test_user";
+    let password = "1234";
+    let output = Command::new("cargo")
+        .arg("run")
+        .arg("--bin")
+        .arg("cli")
+        .arg("users")
+        .arg("create")
+        .arg(username)
+        .arg(password)
+        .arg("admin")
+        .output()
+        .unwrap();
+
+    println!("{:?}", output);
+
+    let client = Client::new();
+    let response = client
+        .post(format!("{}/login", APP_HOST))
+        .json(&json!({
+            "username": username,
+            "password": password
+        }))
+        .send()
+        .unwrap();
+    assert_eq!(response.status(), StatusCode::OK);
+    let json: Value = response.json().unwrap();
+    assert!(json.get("token").is_some());
+    let auth_header = format!("Bearer {}", json["token"].as_str().unwrap());
+
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(&auth_header).unwrap(),
+    );
+
+    ClientBuilder::new()
+        .default_headers(headers)
+        .build()
+        .unwrap()
 }

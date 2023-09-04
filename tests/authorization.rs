@@ -8,9 +8,9 @@ pub mod common;
 
 #[test]
 fn test_login_success() {
-    let username = "test_admin";
+    let username = format!("test_user{}", rand::random::<u32>());
     let password = "1234";
-    let output = create_test_user(username, password);
+    let output = create_test_user(&username, password);
 
     print!("{:?}", output);
 
@@ -38,9 +38,8 @@ fn test_login_success() {
 
 #[test]
 fn test_login_wrong_password() {
-    let username = "test_admin1";
-    let password = "1234";
-    let output = create_test_user(username, password);
+    let username = format!("test_user{}", rand::random::<u32>());
+    let output = create_test_user(&username, "1234");
 
     print!("{:?}", output);
 
@@ -64,9 +63,9 @@ fn test_login_wrong_password() {
 
 #[test]
 fn test_login_wrong_username() {
-    let username = "test_admin2";
+    let username = format!("test_user{}", rand::random::<u32>());
     let password = "1234";
-    let output = create_test_user(username, password);
+    let output = create_test_user(&username, password);
 
     print!("{:?}", output);
 
