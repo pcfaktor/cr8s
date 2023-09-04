@@ -1,3 +1,5 @@
+use std::process::{Command, Output};
+
 use reqwest::{blocking::Client, StatusCode};
 use serde_json::{json, Value};
 
@@ -48,4 +50,35 @@ pub fn delete_test_crate(client: &Client, a_crate: Value) {
         .send()
         .unwrap();
     assert_eq!(response.status(), StatusCode::NO_CONTENT);
+}
+
+pub fn create_test_user(username: &str, password: &str) -> Output {
+    Command::new("cargo")
+        .arg("run")
+        .arg("--bin")
+        .arg("cli")
+        .arg("users")
+        .arg("create")
+        .arg(username)
+        .arg(password)
+        .arg("admin")
+        .output()
+        .unwrap()
+}
+
+pub fn delete_test_user(create_stdout: String) {
+    let prefix = "User { id: ";
+    let suffix = ", username:";
+    let start_bytes = create_stdout.find(prefix).unwrap_or(0) + prefix.len();
+    let end_bytes = create_stdout.find(suffix).unwrap_or(create_stdout.len());
+    let user_id = &create_stdout[start_bytes..end_bytes];
+
+    let _ = Command::new("cargo")
+        .arg("run")
+        .arg("--bin")
+        .arg("cli")
+        .arg("users")
+        .arg("delete")
+        .arg(user_id)
+        .status();
 }

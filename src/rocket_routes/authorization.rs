@@ -20,8 +20,12 @@ pub async fn login(
     let username = credentials.username.clone();
     let user = db
         .run(move |connection| {
-            UserRepository::find_by_username(connection, &username)
-                .map_err(|e| server_error(e.into()))
+            UserRepository::find_by_username(connection, &username).map_err(|e| match e {
+                diesel::result::Error::NotFound => {
+                    Custom(Status::Unauthorized, json!("Wrong credentials"))
+                }
+                _ => server_error(e.into()),
+            })
         })
         .await?;
 
