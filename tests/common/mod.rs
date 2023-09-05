@@ -87,8 +87,7 @@ pub fn delete_test_user(create_stdout: String) {
         .status();
 }
 
-pub fn get_client_with_logged_in_user() -> Client {
-    let username = "test_user";
+pub fn get_logged_in_client(username: &str, role: &str) -> Client {
     let password = "1234";
     let output = Command::new("cargo")
         .arg("run")
@@ -98,7 +97,7 @@ pub fn get_client_with_logged_in_user() -> Client {
         .arg("create")
         .arg(username)
         .arg(password)
-        .arg("admin")
+        .arg(role)
         .output()
         .unwrap();
 
@@ -128,4 +127,12 @@ pub fn get_client_with_logged_in_user() -> Client {
         .default_headers(headers)
         .build()
         .unwrap()
+}
+
+pub fn get_client_with_logged_in_viewer() -> Client {
+    get_logged_in_client("test_viewer", "viewer")
+}
+
+pub fn get_client_with_logged_in_editor() -> Client {
+    get_logged_in_client("test_editor", "editor")
 }

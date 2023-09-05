@@ -13,8 +13,8 @@ use rocket::Request;
 use rocket_db_pools::deadpool_redis::redis::AsyncCommands;
 use rocket_db_pools::{deadpool_redis, Connection, Database};
 
-use crate::models::User;
-use crate::repositories::UserRepository;
+use crate::models::{RoleCode, User};
+use crate::repositories::{RoleRepository, UserRepository};
 
 #[rocket_sync_db_pools::database("postgres")]
 pub struct DbConnection(PgConnection);
@@ -26,6 +26,45 @@ pub struct CacheConnection(deadpool_redis::Pool);
 pub fn server_error(e: Box<dyn std::error::Error>) -> Custom<Value> {
     log::error!("{}", e);
     Custom(Status::InternalServerError, json!("Error"))
+}
+
+pub struct EditorUser(User);
+
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for EditorUser {
+    type Error = ();
+    async fn from_request(request: &'r Request<'_>) -> Outcome<Self, Self::Error> {
+        let user = request
+            .guard::<User>()
+            .await
+            .expect("Cannot retrieve logged in user in request guard");
+        let db = request
+            .guard::<DbConnection>()
+            .await
+            .expect("Cannot connect to postgres in request guard");
+
+        let editor_result = db
+            .run(
+                |connection| match RoleRepository::find_by_user(connection, &user) {
+                    Ok(roles) => {
+                        log::info!("Assigned roles {:?}", roles);
+                        let is_editor = roles.iter().any(|role| match role.code {
+                            RoleCode::Admin => true,
+                            RoleCode::Editor => true,
+                            _ => false,
+                        });
+                        log::info!("Is editor is {:?}", is_editor);
+                        is_editor.then_some(EditorUser(user))
+                    }
+                    _ => None,
+                },
+            )
+            .await;
+        match editor_result {
+            Some(editor) => Outcome::Success(editor),
+            _ => Outcome::Failure((Status::Unauthorized, ())),
+        }
+    }
 }
 
 #[rocket::async_trait]

@@ -7,7 +7,7 @@ use rocket::{
 use crate::{
     models::{Crate, NewCrate, User},
     repositories::CrateRepository,
-    rocket_routes::DbConnection,
+    rocket_routes::{DbConnection, EditorUser},
 };
 
 use super::server_error;
@@ -47,7 +47,7 @@ pub async fn view_crate(id: i32, db: DbConnection, _user: User) -> Result<Value,
 pub async fn create_crate(
     new_crate: Json<NewCrate>,
     db: DbConnection,
-    _user: User,
+    _user: EditorUser,
 ) -> Result<Custom<Value>, Custom<Value>> {
     db.run(move |connection| {
         CrateRepository::create(connection, new_crate.into_inner())
@@ -62,7 +62,7 @@ pub async fn update_crate(
     id: i32,
     a_crate: Json<Crate>,
     db: DbConnection,
-    _user: User,
+    _user: EditorUser,
 ) -> Result<Value, Custom<Value>> {
     db.run(move |connection| {
         CrateRepository::update(connection, id, a_crate.into_inner())
@@ -76,7 +76,7 @@ pub async fn update_crate(
 pub async fn delete_crate(
     id: i32,
     db: DbConnection,
-    _user: User,
+    _user: EditorUser,
 ) -> Result<NoContent, Custom<Value>> {
     db.run(move |connection| {
         CrateRepository::delete(connection, id)

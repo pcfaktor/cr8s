@@ -7,7 +7,7 @@ use rocket::{
 use crate::{
     models::{NewRustacean, Rustacean, User},
     repositories::RustaceanRepository,
-    rocket_routes::DbConnection,
+    rocket_routes::{DbConnection, EditorUser},
 };
 
 use super::server_error;
@@ -51,7 +51,7 @@ pub async fn view_rustacean(
 pub async fn create_rustacean(
     new_rustacean: Json<NewRustacean>,
     db: DbConnection,
-    _user: User,
+    _user: EditorUser,
 ) -> Result<Custom<Value>, Custom<Value>> {
     db.run(move |connection| {
         RustaceanRepository::create(connection, new_rustacean.into_inner())
@@ -66,7 +66,7 @@ pub async fn update_rustacean(
     id: i32,
     rustacean: Json<Rustacean>,
     db: DbConnection,
-    _user: User,
+    _user: EditorUser,
 ) -> Result<Value, Custom<Value>> {
     db.run(move |connection| {
         RustaceanRepository::update(connection, id, rustacean.into_inner())
@@ -80,7 +80,7 @@ pub async fn update_rustacean(
 pub async fn delete_rustacean(
     id: i32,
     db: DbConnection,
-    _user: User,
+    _user: EditorUser,
 ) -> Result<NoContent, Custom<Value>> {
     db.run(move |connection| {
         RustaceanRepository::delete(connection, id)

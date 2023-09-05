@@ -2,7 +2,7 @@ use diesel::prelude::*;
 use rocket_db_pools::deadpool_redis::redis::RedisError;
 
 use crate::auth::SESSION_LIFE_TIME;
-use crate::models::{Crate, NewCrate, NewRustacean, Rustacean};
+use crate::models::{Crate, NewCrate, NewRustacean, RoleCode, Rustacean};
 use crate::models::{NewRole, NewUser, NewUserRole, Role, User, UserRole};
 use crate::rocket_routes::CacheConnection;
 use crate::schema::{crates, roles, rustaceans, user_roles, users};
@@ -86,7 +86,7 @@ impl UserRepository {
     pub fn create(
         c: &mut PgConnection,
         new_user: NewUser,
-        role_codes: Vec<String>,
+        role_codes: Vec<RoleCode>,
     ) -> QueryResult<User> {
         let user = diesel::insert_into(users::table)
             .values(new_user)
@@ -94,15 +94,16 @@ impl UserRepository {
 
         for role_code in role_codes {
             let new_user_role = {
-                if let Ok(role) = RoleRepository::find_by_code(c, role_code.to_owned()) {
+                if let Ok(role) = RoleRepository::find_by_code(c, &role_code) {
                     NewUserRole {
                         user_id: user.id,
                         role_id: role.id,
                     }
                 } else {
+                    let name = role_code.to_string();
                     let new_role = NewRole {
-                        name: role_code.to_owned(),
-                        code: role_code.to_owned(),
+                        name: name,
+                        code: role_code,
                     };
                     let role = RoleRepository::create(c, new_role)?;
                     NewUserRole {
@@ -150,7 +151,7 @@ impl UserRepository {
 pub struct RoleRepository;
 
 impl RoleRepository {
-    pub fn find_by_code(connection: &mut PgConnection, code: String) -> QueryResult<Role> {
+    pub fn find_by_code(connection: &mut PgConnection, code: &RoleCode) -> QueryResult<Role> {
         roles::table.filter(roles::code.eq(code)).first(connection)
     }
 

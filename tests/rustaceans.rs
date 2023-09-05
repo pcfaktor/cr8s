@@ -7,7 +7,7 @@ pub mod common;
 
 #[test]
 fn test_get_rustaceans() {
-    let client = common::get_client_with_logged_in_user();
+    let client = common::get_client_with_logged_in_editor();
     let rustacean1 = create_test_rustacean(&client);
     let rustacean2 = create_test_rustacean(&client);
 
@@ -28,9 +28,9 @@ fn test_get_rustaceans() {
 #[test]
 fn test_get_rustaceans_without_token() {
     let client = Client::new();
-    let client_with_user = common::get_client_with_logged_in_user();
-    let rustacean1 = create_test_rustacean(&client_with_user);
-    let rustacean2 = create_test_rustacean(&client_with_user);
+    let client_with_editor = common::get_client_with_logged_in_editor();
+    let rustacean1 = create_test_rustacean(&client_with_editor);
+    let rustacean2 = create_test_rustacean(&client_with_editor);
 
     let response = client
         .get(format!("{}/rustaceans", common::APP_HOST))
@@ -39,13 +39,13 @@ fn test_get_rustaceans_without_token() {
 
     assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
 
-    delete_test_rustacean(&client_with_user, rustacean1);
-    delete_test_rustacean(&client_with_user, rustacean2);
+    delete_test_rustacean(&client_with_editor, rustacean1);
+    delete_test_rustacean(&client_with_editor, rustacean2);
 }
 
 #[test]
 fn test_create_rustacean() {
-    let client = common::get_client_with_logged_in_user();
+    let client = common::get_client_with_logged_in_editor();
     let response = client
         .post(format!("{}/rustaceans", common::APP_HOST))
         .json(&json!({
@@ -73,10 +73,11 @@ fn test_create_rustacean() {
 
 #[test]
 fn test_view_rustacean() {
-    let client = common::get_client_with_logged_in_user();
-    let rustacean: Value = create_test_rustacean(&client);
+    let client_with_viewer = common::get_client_with_logged_in_viewer();
+    let client_with_editor = common::get_client_with_logged_in_editor();
+    let rustacean: Value = create_test_rustacean(&client_with_editor);
 
-    let response = client
+    let response = client_with_viewer
         .get(format!(
             "{}/rustaceans/{}",
             common::APP_HOST,
@@ -98,12 +99,12 @@ fn test_view_rustacean() {
         })
     );
 
-    delete_test_rustacean(&client, rustacean);
+    delete_test_rustacean(&client_with_editor, rustacean);
 }
 
 #[test]
 fn test_view_rustacean_not_found() {
-    let client = common::get_client_with_logged_in_user();
+    let client = common::get_client_with_logged_in_viewer();
 
     let response = client
         .get(format!("{}/rustaceans/{}", common::APP_HOST, -1))
@@ -114,7 +115,7 @@ fn test_view_rustacean_not_found() {
 
 #[test]
 fn test_update_rustacean() {
-    let client = common::get_client_with_logged_in_user();
+    let client = common::get_client_with_logged_in_editor();
     let rustacean: Value = create_test_rustacean(&client);
 
     let response = client
@@ -148,7 +149,7 @@ fn test_update_rustacean() {
 
 #[test]
 fn test_delete_rustacean() {
-    let client = common::get_client_with_logged_in_user();
+    let client = common::get_client_with_logged_in_editor();
     let rustacean: Value = create_test_rustacean(&client);
 
     let response = client
