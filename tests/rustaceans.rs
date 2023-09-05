@@ -1,4 +1,4 @@
-use reqwest::StatusCode;
+use reqwest::{blocking::Client, StatusCode};
 use rocket::serde::json::{json, Value};
 
 use crate::common::{create_test_rustacean, delete_test_rustacean};
@@ -23,6 +23,24 @@ fn test_get_rustaceans() {
 
     delete_test_rustacean(&client, rustacean1);
     delete_test_rustacean(&client, rustacean2);
+}
+
+#[test]
+fn test_get_rustaceans_without_token() {
+    let client = Client::new();
+    let client_with_user = common::get_client_with_logged_in_user();
+    let rustacean1 = create_test_rustacean(&client_with_user);
+    let rustacean2 = create_test_rustacean(&client_with_user);
+
+    let response = client
+        .get(format!("{}/rustaceans", common::APP_HOST))
+        .send()
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+
+    delete_test_rustacean(&client_with_user, rustacean1);
+    delete_test_rustacean(&client_with_user, rustacean2);
 }
 
 #[test]

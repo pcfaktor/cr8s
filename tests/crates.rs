@@ -1,5 +1,5 @@
 use common::{create_test_crate, create_test_rustacean, delete_test_crate, delete_test_rustacean};
-use reqwest::StatusCode;
+use reqwest::{blocking::Client, StatusCode};
 use serde_json::{json, Value};
 
 pub mod common;
@@ -25,6 +25,25 @@ fn test_get_crates() {
     delete_test_crate(&client, crate1);
     delete_test_crate(&client, crate2);
     delete_test_rustacean(&client, rustacean);
+}
+
+#[test]
+fn test_get_crates_without_token() {
+    let client = Client::new();
+    let client_with_user = common::get_client_with_logged_in_user();
+    let rustacean = create_test_rustacean(&client_with_user);
+    let crate1 = create_test_crate(&client_with_user, &rustacean);
+    let crate2 = create_test_crate(&client_with_user, &rustacean);
+
+    let response = client
+        .get(format!("{}/crates", common::APP_HOST))
+        .send()
+        .unwrap();
+    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+
+    delete_test_crate(&client_with_user, crate1);
+    delete_test_crate(&client_with_user, crate2);
+    delete_test_rustacean(&client_with_user, rustacean);
 }
 
 #[test]
