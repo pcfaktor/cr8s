@@ -1,3 +1,4 @@
+use diesel::dsl::{now, IntervalDsl};
 use diesel::prelude::*;
 use rocket_db_pools::deadpool_redis::redis::RedisError;
 
@@ -49,6 +50,13 @@ impl RustaceanRepository {
 pub struct CrateRepository;
 
 impl CrateRepository {
+    pub fn find_since(connection: &mut PgConnection, hours_since: i32) -> QueryResult<Vec<Crate>> {
+        crates::table
+            .filter(crates::created_at.ge(now - hours_since.seconds()))
+            .order(crates::id.desc())
+            .load::<Crate>(connection)
+    }
+
     pub fn find(connection: &mut PgConnection, id: i32) -> QueryResult<Crate> {
         crates::table.find(id).get_result(connection)
     }

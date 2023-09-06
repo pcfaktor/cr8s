@@ -22,9 +22,9 @@ fn test_get_crates() {
     assert!(json.as_array().unwrap().contains(&crate1));
     assert!(json.as_array().unwrap().contains(&crate2));
 
-    delete_test_crate(&client, crate1);
-    delete_test_crate(&client, crate2);
-    delete_test_rustacean(&client, rustacean);
+    // delete_test_crate(&client, crate1);
+    // delete_test_crate(&client, crate2);
+    // delete_test_rustacean(&client, rustacean);
 }
 
 #[test]

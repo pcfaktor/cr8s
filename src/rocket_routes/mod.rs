@@ -3,6 +3,7 @@ pub mod crates;
 pub mod rustaceans;
 
 use diesel::PgConnection;
+use lettre::transport::smtp::authentication::Credentials;
 use rocket::http::hyper::header;
 use rocket::http::Status;
 use rocket::request::{FromRequest, Outcome};
@@ -13,6 +14,7 @@ use rocket::Request;
 use rocket_db_pools::deadpool_redis::redis::AsyncCommands;
 use rocket_db_pools::{deadpool_redis, Connection, Database};
 
+use crate::mail::HtmlMailer;
 use crate::models::{RoleCode, User};
 use crate::repositories::{RoleRepository, UserRepository};
 
@@ -98,5 +100,29 @@ impl<'r> FromRequest<'r> for User {
         }
 
         Outcome::Failure((Status::Unauthorized, ()))
+    }
+}
+
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for HtmlMailer {
+    type Error = ();
+
+    async fn from_request(request: &'r Request<'_>) -> Outcome<Self, Self::Error> {
+        if let Ok(tera) = tera::Tera::new("templates/**/*.html") {
+            let smtp_host = std::env::var("SMTP_HOST").expect("Cannot load SMTP host from env");
+            let smtp_username =
+                std::env::var("SMTP_USERNAME").expect("Cannot load SMTP username from env");
+            let smtp_password =
+                std::env::var("SMTP_PASSWORD").expect("Cannot load SMTP password from env");
+
+            let credentials = Credentials::new(smtp_username, smtp_password);
+            let mailer = HtmlMailer {
+                smtp_host,
+                credentials,
+                template_engine: tera,
+            };
+            return Outcome::Success(mailer);
+        }
+        Outcome::Failure((Status::InternalServerError, ()))
     }
 }

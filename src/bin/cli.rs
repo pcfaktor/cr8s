@@ -1,4 +1,4 @@
-use clap::{Arg, Command};
+use clap::{arg, Arg, Command};
 
 extern crate cr8s;
 
@@ -32,6 +32,27 @@ fn main() {
                     ),
                 ),
         )
+        .subcommand(
+            Command::new("digest-send")
+                .about("Send an email with the  newest crates")
+                .arg(
+                    Arg::new("to")
+                        .required(true)
+                        .num_args(1..2)
+                        .value_delimiter(','),
+                )
+                .arg(
+                    Arg::new("hours_since")
+                        .required(true)
+                        .value_parser(clap::value_parser!(i32)),
+                )
+                .arg(
+                    arg!([subject])
+                        .required(false)
+                        .default_value(None)
+                        .value_parser(clap::value_parser!(Option<String>)),
+                ),
+        )
         .get_matches();
 
     match matches.subcommand() {
@@ -57,6 +78,18 @@ fn main() {
             }
             _ => {}
         },
+        Some(("digest-send", sub_matches)) => cr8s::commands::send_digest(
+            sub_matches
+                .get_many::<String>("to")
+                .unwrap()
+                .map(|v| v.to_string())
+                .collect(),
+            sub_matches
+                .get_one::<i32>("hours_since")
+                .unwrap()
+                .to_owned(),
+            sub_matches.get_one::<String>("subject").cloned(),
+        ),
         _ => {}
     }
 }
