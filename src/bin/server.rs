@@ -10,6 +10,7 @@ async fn main() {
             rocket::routes![
                 cr8s::rocket_routes::options,
                 cr8s::rocket_routes::authorization::login,
+                cr8s::rocket_routes::authorization::me,
                 cr8s::rocket_routes::crates::get_crates,
                 cr8s::rocket_routes::crates::view_crate,
                 cr8s::rocket_routes::crates::create_crate,

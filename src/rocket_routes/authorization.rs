@@ -1,6 +1,7 @@
 use super::{server_error, DbConnection};
 use crate::{
     auth::{self, Credentials},
+    models::User,
     repositories::{SessionRepository, UserRepository},
     rocket_routes::CacheConnection,
 };
@@ -36,4 +37,9 @@ pub async fn login(
         .await
         .map(|_| json!({ "token": session_id }))
         .map_err(|e| server_error(e.into()))
+}
+
+#[rocket::get("/me")]
+pub fn me(user: User) -> Value {
+    json!(user)
 }
