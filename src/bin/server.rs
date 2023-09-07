@@ -1,4 +1,3 @@
-use cr8s::rocket_routes::{CacheConnection, DbConnection};
 use rocket_db_pools::Database;
 
 extern crate cr8s;
@@ -9,6 +8,7 @@ async fn main() {
         .mount(
             "/",
             rocket::routes![
+                cr8s::rocket_routes::options,
                 cr8s::rocket_routes::authorization::login,
                 cr8s::rocket_routes::crates::get_crates,
                 cr8s::rocket_routes::crates::view_crate,
@@ -22,8 +22,9 @@ async fn main() {
                 cr8s::rocket_routes::rustaceans::delete_rustacean,
             ],
         )
-        .attach(DbConnection::fairing())
-        .attach(CacheConnection::init())
+        .attach(cr8s::rocket_routes::Cors)
+        .attach(cr8s::rocket_routes::DbConnection::fairing())
+        .attach(cr8s::rocket_routes::CacheConnection::init())
         .launch()
         .await;
 }
