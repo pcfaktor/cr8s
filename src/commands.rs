@@ -10,7 +10,7 @@ use crate::models::{NewUser, RoleCode};
 use crate::repositories::{CrateRepository, RoleRepository, UserRepository};
 
 pub fn load_db_connection() -> PgConnection {
-    let database_url = std::env::var("DATABASE_URL").expect("Cannot read DB url from env");
+    let database_url = std::env::var("INPUT_DATABASE_URL").expect("Cannot read DB url from env");
     PgConnection::establish(&database_url).expect("Cannot connect to postgres")
 }
 
