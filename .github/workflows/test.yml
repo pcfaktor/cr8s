@@ -1,4 +1,4 @@
-name: Test
+name: Tests
 
 on:
   push:
@@ -6,42 +6,27 @@ on:
   pull_request:
     branches: [ "main" ]
 
-env:
-  CARGO_TERM_COLOR: always
-
 jobs:
-  build:
-
+  docker:
+    timeout-minutes: 10
     runs-on: ubuntu-latest
 
-    services:
-      postgresql:
-        image: postgres:latest
-        env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: postgres
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-      redis:
-        image: redis:latest
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
-    - uses: actions/checkout@v3
-    - name: Build
-      run: cargo build
-    - name: Set env
-      run: echo "DATABASE_URL=localhost://postgres:postgres@postgres/postgres" >> $GITHUB_ENV
-    - name: Run tests
-      run: cargo test
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Start containers
+      run: docker compose -f "docker-compose.yml" up -d --build --wait
+
+    - name: Run migrations
+      run: docker compose exec -T app diesel migration run
+
+    - name: Run the app 
+      run: docker compose exec -T app cargo run &
+
+    - name: Run tests 
+      run: docker compose exec -T app cargo test
+
+    - name: Stop containers
+      if: always()
+      run: docker compose -f "docker-compose.yml" down

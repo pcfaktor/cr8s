@@ -1,4 +1,4 @@
-tversion: '3.3'
+version: "3.3"
 
 services:
   postgres:
@@ -8,6 +8,11 @@ services:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=app_db
     command: [ "postgres", "-c", "log_statement=all" ]
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d app_db" ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
 
   redis:
     image: redis:latest
@@ -28,3 +33,7 @@ services:
       - 8000:8000
     volumes:
       - ./:/app
+    links:
+      - postgres
+    depends_on:
+      - postgres
